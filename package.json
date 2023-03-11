@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "clear-require": "^3.0.0",
+    "moment": "^2.29.4",
     "selenium-webdriver": "^4.8.1"
   }
 }

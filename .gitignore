@@ -1,4 +1,4 @@
-# geckodriver (get it yourself)
+# geckodriver, get it yourself - https://github.com/mozilla/geckodriver/releases/
 geckodriver.exe
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
