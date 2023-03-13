@@ -14,9 +14,9 @@ const webdriver = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 // requires geckodriver https://github.com/mozilla/geckodriver/releases/
 const {Builder, Browser, By, Key, until} = require('selenium-webdriver');
-global.wb = require('selenium-webdriver');
 const moment = require('moment')
 const sqlite3 = require('sqlite3').verbose();
+let driver
 
 const db = new sqlite3.Database('catwar.sql');
 
@@ -30,6 +30,10 @@ blogid = { // ID блога
 }
 
 timelimit = {
+    "https://catwar.su/blogs": null,
+    "https://catwar.su/sniff": null
+}
+dbid = {
     "https://catwar.su/blogs": null,
     "https://catwar.su/sniff": null
 }
@@ -67,15 +71,23 @@ async function login() {
     return 0;
 }
 
-async function updatepost(kill, url) {
-    await driver.get(`${url.replace('blogs', 'blog')}${blogid[url]}`)
-    await sleep(3000)
-    b = await driver.findElements(By.xpath("//a[@class='comment-delete' and text()='Удалить' and @style!='display: none;']"))
-    for (s of b) {
-        s.click()
-        await sleep(500)
+const bsco = {
+    "https://catwar.su/blogs": "блога",
+    "https://catwar.su/sniff": "ленты"
+}
+
+async function updatepost(kill, url, del = true) {
+    if (del) {
+        await driver.get(`${url.replace('blogs', 'blog')}${blogid[url]}`)
+        await sleep(3000)
+        b = await driver.findElements(By.xpath("//a[@class='comment-delete' and text()='Удалить' and @style!='display: none;']"))
+        for (s of b) {
+            s.click()
+            await sleep(500)
+        }
     }
     if (!kill) {
+        console.log(`Обновление комментария ${bsco[url]} ${blogid[url]} (${dbid[url]})`)
         t = await driver.findElement(By.xpath("//input[@id='comment_anon']"))
         t.sendKeys(anon[url])
         t = await driver.findElement(By.xpath("//textarea[@id='comment']"))
@@ -89,9 +101,7 @@ async function updatepost(kill, url) {
             console.log(e)
             switch (e) {
             case "Автор запретил оставлять анонимные комментарии.":
-                postedid[url] = null
-                blogid[url] = null
-                timelimit[url] = null
+                updatepost(kill, url, false)
             break
             case "Любим пофлудить?":
                 await sleep(75000)
@@ -105,35 +115,42 @@ async function updatepost(kill, url) {
             postedid[url] = await b[b.length-1].getAttribute('data-id')
         }
     } else {
+        // Пока что закомментированно
+        //db.run("DELETE FROM Sniff WHERE incr = (?)", dbid[url])
         postedid[url] = null
         blogid[url] = null
         timelimit[url] = null
+        dbid[url] = null
     }
 }
 
 async function reloadsql() { // TODO: МБ убрать повторяющийся код
     if (!blogid["https://catwar.su/blogs"]) {
-        db.each("SELECT * FROM Blogs ORDER BY id LIMIT 1", (err, row) => {
+        db.each(`SELECT * FROM Blogs WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' ORDER BY incr LIMIT 1`, (err, row) => {
             if (err) {
                 console.log(err)
                 return
             }
             blogid["https://catwar.su/blogs"] = row.id
-            time = row.time.split(':')
-            timelimit["https://catwar.su/blogs"] = moment(new Date()).add(time[0], "h").add(time[1], "m").add(time[2], "s")
-            db.run(`UPDATE Blogs SET started = '${moment().format("YYYY-MM-DD HH-mm-ss")}' WHERE incr = ${row.incr}`)
+            dbid["https://catwar.su/sniff"] = row.incr
+            timelimit["https://catwar.su/blogs"] = moment(row.end_time, 'YYYY-MM-DD HH-mm-ss')
+            text["https://catwar.su/sniff"] = row.text
+            anon["https://catwar.su/sniff"] = row.anon
+            console.log(`Поднятие комментария в блоге ${row.id} (${row.incr})`)
         })
     }
     if (!blogid["https://catwar.su/sniff"]) {
-        db.each("SELECT * FROM Sniff ORDER BY id LIMIT 1", (err, row) => {
+        db.each(`SELECT * FROM Sniff WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' ORDER BY incr LIMIT 1`, (err, row) => {
             if (err) {
                 console.log(err)
                 return
             }
             blogid["https://catwar.su/sniff"] = row.id
-            time = row.time.split(':')
-            timelimit["https://catwar.su/sniff"] = moment(new Date()).add(time[0], "h").add(time[1], "m").add(time[2], "s")
-            db.run(`UPDATE Sniff SET started = '${moment().format("YYYY-MM-DD HH-mm-ss")}' WHERE incr = ${row.incr}`)
+            dbid["https://catwar.su/sniff"] = row.incr
+            timelimit["https://catwar.su/sniff"] = moment(row.end_time, 'YYYY-MM-DD HH-mm-ss')
+            text["https://catwar.su/sniff"] = row.text
+            anon["https://catwar.su/sniff"] = row.anon
+            console.log(`Поднятие комментария в ленте ${row.id} (${row.incr})`)
         })
     }
 }
@@ -143,22 +160,22 @@ async function loop() {
     // Checking state
     const cururl = await driver.getCurrentUrl()
     if (cururl == 'https://catwar.su/login') {
+        console.log('Авторизация')
         await login()
         await sleep(1000)
         consec_updates = -1
     } else {
-        consec_updates = (consec_updates + 1) % 60 // Reset page every 60 requests just in case
-        const url = (consec_updates % 20) == 0 ? "https://catwar.su/blogs" : "https://catwar.su/sniff"
+        consec_updates = (consec_updates + 1) % 20
+        const url = consec_updates == 0 ? "https://catwar.su/blogs" : "https://catwar.su/sniff"
         // We check blogs every 20 updates (~14 seconds) since they are not as active as sniffs are
         if (consec_updates == 0 || cururl != url) {
             await driver.get(url)
             await reloadsql()
             await sleep(2000)
         }
-        //console.log(url, consec_updates)
         try {
-            if (blogid[url] && timelimit[url] < new Date()) {
-                //console.log(timelimit[url], postedid[url], blogid[url])
+            if (blogid[url] && timelimit[url] < moment()) {
+                console.log(`Закончена работа поддержки ${bsco[url]} ${blogid[url]} (${dbid[url]})`)
                 await updatepost(true, url)
                 await reloadsql()
                 return 0
@@ -188,13 +205,14 @@ async function loop() {
 }
 
 db.serialize((async function start() {
-    let driver = await new Builder()
-    .forBrowser(Browser.FIREFOX)
-    .setFirefoxOptions(new firefox.Options().setBinary(FIREFOX_PATH))
-    .build()
-    global.driver = driver
-    db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, time TIME NOT NULL, started DATETIME)")
-    db.run("CREATE TABLE IF NOT EXISTS Sniff (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, time TIME NOT NULL, started DATETIME)")
+    console.log('Ну типа запуск')
+    driver = await new Builder()
+        .forBrowser(Browser.FIREFOX)
+        .setFirefoxOptions(new firefox.Options().setBinary(FIREFOX_PATH))
+        .build()
+    
+    db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL)")
+    db.run("CREATE TABLE IF NOT EXISTS Sniff (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL)")
     try {
         await driver.get('https://catwar.su/blogs')
         while (true) {
