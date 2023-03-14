@@ -71,9 +71,9 @@ async function login() {
     return 0;
 }
 
-const bsco = {
-    "https://catwar.su/blogs": "блога",
-    "https://catwar.su/sniff": "ленты"
+const bsco = { // TODO: const?
+    "https://catwar.su/blogs": "Blogs",
+    "https://catwar.su/sniff": "Sniff"
 }
 
 async function updatepost(kill, url, del = true) {
@@ -115,8 +115,7 @@ async function updatepost(kill, url, del = true) {
             postedid[url] = await b[b.length-1].getAttribute('data-id')
         }
     } else {
-        // Пока что закомментированно
-        //db.run("DELETE FROM Sniff WHERE incr = (?)", dbid[url])
+        db.run(`UPDATE ${bsco[url]} SET status = 1 WHERE incr = (?)`, dbid[url])
         postedid[url] = null
         blogid[url] = null
         timelimit[url] = null
@@ -126,7 +125,7 @@ async function updatepost(kill, url, del = true) {
 
 async function reloadsql() { // TODO: МБ убрать повторяющийся код
     if (!blogid["https://catwar.su/blogs"]) {
-        db.each(`SELECT * FROM Blogs WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' ORDER BY incr LIMIT 1`, (err, row) => {
+        db.each(`SELECT * FROM Blogs WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' AND status IS 0 ORDER BY incr LIMIT 1`, (err, row) => {
             if (err) {
                 console.log(err)
                 return
@@ -140,7 +139,7 @@ async function reloadsql() { // TODO: МБ убрать повторяющийс
         })
     }
     if (!blogid["https://catwar.su/sniff"]) {
-        db.each(`SELECT * FROM Sniff WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' ORDER BY incr LIMIT 1`, (err, row) => {
+        db.each(`SELECT * FROM Sniff WHERE start_time < '${moment().subtract(10,'s').format("YYYY-MM-DD HH-mm-ss")}' AND end_time > '${moment().format("YYYY-MM-DD HH-mm-ss")}' AND status IS 0 ORDER BY incr LIMIT 1`, (err, row) => {
             if (err) {
                 console.log(err)
                 return
@@ -208,11 +207,17 @@ db.serialize((async function start() {
     console.log('Ну типа запуск')
     driver = await new Builder()
         .forBrowser(Browser.FIREFOX)
-        .setFirefoxOptions(new firefox.Options().setBinary(FIREFOX_PATH))
+        .setFirefoxOptions(new firefox.Options().setBinary(FIREFOX_PATH).headless())
         .build()
     
-    db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL)")
-    db.run("CREATE TABLE IF NOT EXISTS Sniff (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL)")
+    db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL, status INTEGER NOT NULL)")
+    db.run("CREATE TABLE IF NOT EXISTS Sniff (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL, status INTEGER NOT NULL)")
+    /*
+    Status: 
+    0 - бот не работал с этим id,
+    1 - бот успешно проработал,
+    2 - отменено
+    */
     try {
         await driver.get('https://catwar.su/blogs')
         while (true) {

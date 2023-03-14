@@ -1,5 +1,7 @@
+catwar.sql
+
 # geckodriver, get it yourself - https://github.com/mozilla/geckodriver/releases/
-geckodriver.exe
+geckodriver*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
