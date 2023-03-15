@@ -1,6 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js')
-const sqlite3 = require('sqlite3').verbose()
-const db = new sqlite3.Database('catwar.sql')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -18,9 +16,9 @@ module.exports = {
 			.setName('id')
 			.setDescription('id блога')
 			.setRequired(true)),
-	async execute(interaction) {
+	async execute(interaction, db) {
 		try {
-			db.run(`DELETE FROM ${interaction.options.getString('section')} WHERE incr = ${interaction.options.getInteger('id')}`)
+			await db.run(`DELETE FROM ${interaction.options.getString('section')} WHERE incr = ${interaction.options.getInteger('id')}`)
 			//db.run(`UPDATE ${interaction.options.getString('section')} SET status = 2 WHERE incr = ${interaction.options.getInteger('id')}`)
 			interaction.reply('k')
 		} catch (e) {

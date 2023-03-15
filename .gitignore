@@ -1,4 +1,5 @@
 catwar.sql
+config.json
 
 # geckodriver, get it yourself - https://github.com/mozilla/geckodriver/releases/
 geckodriver*

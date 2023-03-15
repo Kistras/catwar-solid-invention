@@ -1,6 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js')
-const sqlite3 = require('sqlite3').verbose()
-const db = new sqlite3.Database('catwar.sql')
 const moment = require('moment')
 
 module.exports = {
@@ -35,7 +33,7 @@ module.exports = {
 			.setName('anon')
 			.setDescription('Псевдоним (если разрешено)')
 			.setRequired(false)),
-	async execute(interaction) {
+	async execute(interaction, db) {
 		try {
 			//console.log(interaction.options.getString('start_time').split('-').length)
 			if (interaction.options.getString('start_time').split('-').length != 5) {
@@ -46,7 +44,7 @@ module.exports = {
 				interaction.reply('Неверный формат end_time')
 				return
 			}
-			db.run(`INSERT INTO ${interaction.options.getString('section')} (id, text, anon, start_time, end_time, status) VALUES (?,?,?,?,?,0)`, 
+			await db.run(`INSERT INTO ${interaction.options.getString('section')} (id, text, anon, start_time, end_time, status) VALUES (?,?,?,?,?,0)`, 
 				interaction.options.getInteger('id'), interaction.options.getString('text'), interaction.options.getString('anon') ?? "", 
 				// Escaping any errors that might come
 				moment(interaction.options.getString('start_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss"), 

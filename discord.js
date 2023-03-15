@@ -18,7 +18,12 @@ for (const file of commandFiles) {
 	client.commands.set(command.data.name, command);
 }
 
-client.once(Events.ClientReady, () => {
+const {open, OPEN_READWRITE} = require('promised.sqlite')
+let db
+//open('catwar.sql', OPEN_READWRITE).then((_) => db = _)
+
+client.once(Events.ClientReady, async () => {
+	db = await open('catwar.sql', OPEN_READWRITE)
 	console.log('Ready!');
 });
 
@@ -30,7 +35,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (!command) return;
 
 	try {
-		await command.execute(interaction);
+		await command.execute(interaction, db);
 	} catch (error) {
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {

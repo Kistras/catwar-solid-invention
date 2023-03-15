@@ -12,6 +12,7 @@
     "clear-require": "^3.0.0",
     "discord.js": "^14.8.0",
     "moment": "^2.29.4",
+    "promised.sqlite": "^0.2.0",
     "selenium-webdriver": "^4.8.1",
     "sqlite3": "^5.1.4"
   }

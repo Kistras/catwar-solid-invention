@@ -1,20 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js')
 const { EmbedBuilder } = require('discord.js');
-const sqlite3 = require('sqlite3').verbose()
-const db = new sqlite3.Database('catwar.sql')
-
-
-const selectIds = (s) => {
-	return new Promise((resolve, reject) => {
-		let result = []
-		db.each(s, (err, row) => {
-			if(err) { reject(err) }
-			result.push(row)
-		}, () => {
-			resolve(result)
-		})
-	})
-}
 
 const sta = {
 	0: "-",
@@ -38,10 +23,10 @@ module.exports = {
 			.setName('page')
 			.setDescription('?')
 			.setRequired(true)),
-	async execute(interaction) {
+	async execute(interaction, db) {
 		try {
-			page = interaction.options.getInteger('page')-1
-			t = await selectIds(`SELECT * FROM ${interaction.options.getString('section')} WHERE status = 0 ORDER BY incr LIMIT ${page*10}, ${page*10+10}`)
+			let page = interaction.options.getInteger('page')-1
+			let t = await db.all(`SELECT * FROM ${interaction.options.getString('section')} WHERE status = 0 ORDER BY incr LIMIT ${page*10}, ${page*10+10}`)
 			const embed = new EmbedBuilder()
 				.setColor(0x0099FF)
 				.setFooter({ text: `Страница ${page+1}/?`, iconURL: 'https://i.imgur.com/AfFp7pu.png' })
