@@ -22,8 +22,7 @@ module.exports = {
 			//db.run(`UPDATE ${interaction.options.getString('section')} SET status = 2 WHERE incr = ${interaction.options.getInteger('id')}`)
 			interaction.reply('k')
 		} catch (e) {
-			console.log(e)
-			interaction.reply('Error:',e.message)
+			interaction.reply('Error: ' + e.stack)
 		}
 	},
 };

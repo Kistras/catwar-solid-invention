@@ -115,7 +115,7 @@ async function updatepost(kill, url, del = true) {
             postedid[url] = await b[b.length-1].getAttribute('data-id')
         }
     } else {
-        console.log(await db.run(`UPDATE ${bsco[url]} SET status = 1 WHERE incr = (?)`, dbid[url]))
+        console.log(await db.run(`UPDATE ${bsco[url]} SET status = 1 WHERE incr = ?`, dbid[url]))
         postedid[url] = null
         blogid[url] = null
         timelimit[url] = null
@@ -226,34 +226,3 @@ async function loop() {
         await db.close()
     }
 })()
-
-const fs = require("fs")
-const clear_require = require('clear-require')
-let lastupdate = 0
-
-async function updatecode() {
-    clear_require('./botcode.js')
-
-    const text = fs.readFileSync('./botcode.js').toString('utf8')
-    let F
-    try {
-        F = Function(text)
-    } catch (e) {
-        console.log(e)
-        return
-    }
-    try {
-        F()
-    } catch (e) {
-        console.log(e)
-    }
-    //module.dobot(bot)
-}
-
-fs.watch("botcode.js", (eventType, filename) => {
-    const time = new Date().getTime()
-    if (eventType === "change" && time - lastupdate > 300) {
-        setTimeout(updatecode, 300)
-    }
-    lastupdate = time
-});

@@ -45,14 +45,13 @@ module.exports = {
 				return
 			}
 			await db.run(`INSERT INTO ${interaction.options.getString('section')} (id, text, anon, start_time, end_time, status) VALUES (?,?,?,?,?,0)`, 
-				interaction.options.getInteger('id'), interaction.options.getString('text'), interaction.options.getString('anon') ?? "", 
+				[interaction.options.getInteger('id'), interaction.options.getString('text'), interaction.options.getString('anon') ?? "", 
 				// Escaping any errors that might come
 				moment(interaction.options.getString('start_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss"), 
-				moment(interaction.options.getString('end_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss"))
+				moment(interaction.options.getString('end_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss")])
 			interaction.reply('Success (?)')
 		} catch (e) {
-			console.log(e)
-			interaction.reply('Error:',e.message)
+			interaction.reply('Error: ' + e.stack)
 		}
 	},
 };

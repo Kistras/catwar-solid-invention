@@ -37,7 +37,6 @@ module.exports = {
 			interaction.reply({ embeds: [embed] })
 			//interaction.reply('k')
 		} catch (e) {
-			console.log(e)
 			interaction.reply('Error: ' + e.stack)
 		}
 	},
