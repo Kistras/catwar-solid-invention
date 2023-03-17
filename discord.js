@@ -3,8 +3,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
-const { token } = require('./config.json');
+const { Client, Collection, Events, GatewayIntentBits, WebhookClient } = require('discord.js');
+const { token, webhook } = require('./config.json');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -20,10 +20,14 @@ for (const file of commandFiles) {
 
 const {open, OPEN_READWRITE} = require('promised.sqlite')
 let db
+let whitelist = {} // Пока так
 //open('catwar.sql', OPEN_READWRITE).then((_) => db = _)
 
 client.once(Events.ClientReady, async () => {
 	db = await open('catwar.sql', OPEN_READWRITE)
+	await client.application.fetch()
+	whitelist[client.application.owner.id] = true
+	console.log(whitelist)
 	console.log('Ready!');
 });
 
@@ -33,6 +37,11 @@ client.on(Events.InteractionCreate, async interaction => {
 	const command = client.commands.get(interaction.commandName);
 
 	if (!command) return;
+
+	if (!whitelist[interaction.user.id]) {
+		await interaction.reply({ content: 'Недостаточно прав', ephemeral: true })
+		return
+	}
 
 	try {
 		await command.execute(interaction, db);
@@ -47,3 +56,16 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.login(token);
+
+try {
+	const wb = new WebhookClient({url: webhook})
+	const _log = console.log
+	console.log = (...data) => {
+		s = ""
+		for (d of data) s += d.toString()
+		_log(...data)
+		wb.send(s)
+	}
+} catch (e) {
+	console.log('Вебхук не был привязан. Отправка логов в дс неактивна.')
+}

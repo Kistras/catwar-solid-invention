@@ -16,8 +16,11 @@ const firefox = require('selenium-webdriver/firefox');
 const {Builder, Browser, By, Key, until} = require('selenium-webdriver');
 const moment = require('moment')
 const {open, OPEN_READWRITE} = require('promised.sqlite')
-let driver
 
+require('./discord')
+
+global.active
+let driver
 let db 
 
 postedid = { // ID комментария
@@ -207,6 +210,11 @@ async function loop() {
     
     await db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL, status INTEGER NOT NULL)")
     await db.run("CREATE TABLE IF NOT EXISTS Sniff (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL, status INTEGER NOT NULL)")
+    await db.run("CREATE TABLE IF NOT EXISTS Status (key STRING PRIMARY KEY NOT NULL, value INTEGER NOT NULL)")
+    
+    if ((await db.get("SELECT COUNT(*) FROM Status"))['COUNT(*)'] == 0)
+        await db.get("INSERT INTO Status (key, value) VALUES ('active',1)")
+    global.active = await db.get("SELECT value FROM Status WHERE key = 'active'") ?? 1
     /*
     Status: 
     0 - бот не работал с этим id,
@@ -216,7 +224,8 @@ async function loop() {
     try {
         await driver.get('https://catwar.su/blogs')
         while (true) {
-            await loop()
+            if (global.active)
+                await loop()
             await sleep(500)
         }
     } catch (e) {

@@ -29,7 +29,7 @@ module.exports = {
 			let t = await db.all(`SELECT * FROM ${interaction.options.getString('section')} WHERE status = 0 ORDER BY incr LIMIT ${page*10}, ${page*10+10}`)
 			const embed = new EmbedBuilder()
 				.setColor(0x0099FF)
-				.setFooter({ text: `Страница ${page+1}/?`, iconURL: 'https://i.imgur.com/AfFp7pu.png' })
+				.setFooter({text: `Страница ${page+1}/?`})
 
 			for (k of t) {
 				embed.addFields({ name: ` = ${k.incr} = `, value: `**id**: ${k.id}\n**text**: ${k.text}\n**anon**: ${k.anon}\n**start_time**: ${k.start_time}\n**end_time**: ${k.end_time}\n**status**: ${sta[k.status] ?? k.status}`, inline: false })
