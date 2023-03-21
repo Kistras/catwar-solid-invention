@@ -44,11 +44,19 @@ module.exports = {
 				interaction.reply('Неверный формат end_time')
 				return
 			}
-			await db.run(`INSERT INTO ${interaction.options.getString('section')} (id, text, anon, start_time, end_time, status) VALUES (?,?,?,?,?,0)`, 
-				[interaction.options.getInteger('id'), interaction.options.getString('text'), interaction.options.getString('anon') ?? "", 
+			let sec = interaction.options.getString('section')
+			let id = interaction.options.getInteger('id')
+			let text = interaction.options.getString('text')
+			let anon = interaction.options.getString('anon') ?? ""
+			let start = interaction.options.getString('start_time')
+			let end = interaction.options.getString('end_time')
+
+			await db.run(`INSERT INTO ${sec} (id, text, anon, start_time, end_time, status) VALUES (?,?,?,?,?,0)`, 
+				[id, text, anon, 
 				// Escaping any errors that might come
-				moment(interaction.options.getString('start_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss"), 
-				moment(interaction.options.getString('end_time'), 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss")])
+				moment(start, 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss"), 
+				moment(end, 'YYYY-MM-DD HH-mm-ss').format("YYYY-MM-DD HH-mm-ss")])
+			console.log(`Добавлен ${sec}:\n**id**: ${id}\n**text**: ${text}\n**anon**: ${anon}\n**start**: ${start}\n**end**: ${end}`)
 			interaction.reply('Success (?)')
 		} catch (e) {
 			interaction.reply('Error: ' + e.stack)

@@ -10,6 +10,7 @@ module.exports = {
 			await db.run("UPDATE Status SET value = 0 WHERE key = 'active'")
 			global.active = 0
 			interaction.reply('Success (?)')
+			console.log('Выключение бота')
 		} catch (e) {
 			interaction.reply('Error: ' + e.stack)
 		}

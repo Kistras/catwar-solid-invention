@@ -18,9 +18,12 @@ module.exports = {
 			.setRequired(true)),
 	async execute(interaction, db) {
 		try {
-			await db.run(`DELETE FROM ${interaction.options.getString('section')} WHERE incr = ${interaction.options.getInteger('id')}`)
+			let sec = interaction.options.getString('section')
+			let id = interaction.options.getInteger('id')
+			await db.run(`DELETE FROM ${sec} WHERE incr = ${id}`)
 			//db.run(`UPDATE ${interaction.options.getString('section')} SET status = 2 WHERE incr = ${interaction.options.getInteger('id')}`)
 			interaction.reply('k')
+			console.log(`Удален ${sec} (${id})`)
 		} catch (e) {
 			interaction.reply('Error: ' + e.stack)
 		}

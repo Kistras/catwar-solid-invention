@@ -28,7 +28,7 @@ client.once(Events.ClientReady, async () => {
 	await client.application.fetch()
 	whitelist[client.application.owner.id] = true
 	console.log(whitelist)
-	console.log('Ready!');
+	console.log('Ready!')
 });
 
 client.on(Events.InteractionCreate, async interaction => {
