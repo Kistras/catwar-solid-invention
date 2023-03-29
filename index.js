@@ -178,7 +178,7 @@ async function loop() {
             if (blogid[url]) {
                 var found = false
                 for (var i in m) {
-                    if (i >= post_threshold) break // Limited to first N comments
+                    if (i >= POST_THRESHOLD) break // Limited to first N comments
                     t = m[i]
                     if (!t) break
                     id = await t.getAttribute("data-id")

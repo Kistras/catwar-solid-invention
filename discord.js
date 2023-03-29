@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, WebhookClient } = require('discord.js');
-const { token, webhook } = require('./config.json');
+const { TOKEN, WEBHOOK } = require('./config.json');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -55,10 +55,10 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-client.login(token);
+client.login(TOKEN);
 
 try {
-	const wb = new WebhookClient({url: webhook})
+	const wb = new WebhookClient({url: WEBHOOK})
 	const _log = console.log
 	console.log = (...data) => {
 		s = ""
