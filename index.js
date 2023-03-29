@@ -5,10 +5,7 @@ Am I the one fading in the sun
 A light that stole the dark from me
 But did the dark deserve to be
 */
-const FIREFOX_PATH = 'C:/Program Files/Mozilla Firefox/firefox.exe'
-const EMAIL = "tnay1mi4sye@gmail.com"
-const PASSWORD = "throwaway666"
-const POSTTHR = 2 // Кол-во постов сверху, среди которых должен быть наш
+const {firefox_path, email, password, post_threshold} = require('./config.json')
 
 const webdriver = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
@@ -61,9 +58,9 @@ function sleep(ms) {
 async function login() {
     try {
         m = await driver.findElement(By.id('mail'))
-        m.sendKeys(EMAIL)
+        m.sendKeys(email)
         p = await driver.findElement(By.id('pass'))
-        p.sendKeys(PASSWORD)
+        p.sendKeys(password)
         await sleep(250)
         p.submit()
     } catch (e) {
@@ -181,7 +178,7 @@ async function loop() {
             if (blogid[url]) {
                 var found = false
                 for (var i in m) {
-                    if (i >= POSTTHR) break // Limited to first N comments
+                    if (i >= post_threshold) break // Limited to first N comments
                     t = m[i]
                     if (!t) break
                     id = await t.getAttribute("data-id")
@@ -205,7 +202,7 @@ async function loop() {
     db = await open('catwar.sql', OPEN_READWRITE)
     driver = await new Builder()
         .forBrowser(Browser.FIREFOX)
-        .setFirefoxOptions(new firefox.Options().setBinary(FIREFOX_PATH).headless())
+        .setFirefoxOptions(new firefox.Options().setBinary(firefox_path).headless())
         .build()
     
     await db.run("CREATE TABLE IF NOT EXISTS Blogs (incr INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id INTEGER NOT NULL, text TEXT NOT NULL, anon TEXT, start_time DATETIME NOT NULL, end_time DATETIME NOT NULL, status INTEGER NOT NULL)")
